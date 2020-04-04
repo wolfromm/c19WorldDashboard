@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+svg {
+    height: 5000px;
+    width: 97%;
+}
+</style>
+<body>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<h1>C19 World Evolution</h3>
+<h2>Daily number of deaths</h4>
+<svg id="svg"></svg>
+
+<script>
+// https://blog.risingstack.com/tutorial-d3-js-calendar-heatmap/
+// https://gist.github.com/matehuszarik/b1a8004c52334d8efcd0f9aaad195cf9
+
+// const countries = ['FRA', 'ITA', 'ESP', 'CHN', 'GBR', 'NLD', 'DEU', 'BEL', 'CHE', 'SWE', 'PRT', 'AUT', 'DNK', 'ROU', 'IRL', 'GRC', 'NOR', 'POL', 'RUS']
+// const countries = ['CHN', 'USA', 'BRA', 'CAN', 'ECU', 'DOM', 'PER']
+// const countries = ['CHN', 'JPN', 'KOR', 'MYS', 'IDN', 'SGP', 'THA', 'PHL', 'IND']
+// const countries = ['CHN', 'IRN', 'TUR', 'DZA', 'IRQ', 'EGY']
+
+
+// const countries = ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK", "KGZ", "TKM"]
+// const countries = ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU", "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR", "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"]
+// const countries = ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM", "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT", "PSE"]
+// const countries = ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"]
+// const countries = ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ", "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB", "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN", "TGO", "SLE", "ERI", "CAF"]
+const countries = ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
+
+
+d3.csv('c19.csv')
+    .then(function(data) {
+        const dateValues = data.map(dv => ({
+            country: dv.countriesAndTerritories,
+            countryCode: dv.countryterritoryCode,
+            date: d3.timeDay(new Date(`${dv.year}-${dv.month}-${dv.day}`)),
+            value: Number(dv.deaths)
+        }));
+        console.log(dateValues)
+        const dateValuesEurope = dateValues.filter(
+            d => countries.includes(d.countryCode))
+        draw(dateValuesEurope)
+    })
+    .catch(function(error){
+        console.log(error)
+    })
+
+const svg = d3.select("#svg");
+const { width, height } = document
+    .getElementById("svg")
+    .getBoundingClientRect();
+
+function draw(dateValues) {
+
+    const countries = d3
+        .nest()
+        .key(d => d.country)
+        .entries(dateValues)
+        // .reverse();
+
+    console.log(countries)
+
+    const values = dateValues.map(c => c.value);
+    const maxValue = d3.max(values);
+    const minValue = d3.min(values);
+
+    const cellSize = 15;
+
+    const group = svg.append("g");
+    const startDate = new Date("2020-01-01")
+    const formatDate = d3.utcFormat("%B %d");
+    const colorFn = d3
+        .scaleSequential(d3.interpolateInferno)
+        // .domain([Math.floor(minValue), Math.ceil(maxValue)]);
+        .domain([300, 0]);
+
+    const country = group
+        .selectAll("g")
+        .data(countries)
+        .join("g")
+        .attr("transform",
+            (d, i) => `translate(150, ${cellSize * i + cellSize * 1.5})`
+        );
+
+    country
+        .append("text")
+        .attr("x", 5)
+        .attr("y", cellSize - 5)
+        .attr("text-anchor", "end")
+        .attr("font-size", 14)
+        .attr("font-weight", 550)
+        // .attr("transform", "rotate(270)")
+        .text(d => d.key);
+
+    country
+        .append("g")
+        .selectAll("rect")
+        .data(d => d.values)
+        .join("rect")
+        .attr("width", cellSize/2 - 1.5)
+        .attr("height", cellSize - 1.5)
+        .attr("x",
+            (d, i) => d3.timeDay.count(startDate, d.date) * cellSize/2 + 20
+        )
+        .attr("y", 0)
+        .attr("fill", d => (d.value == 0 ? '#F8F8F8' : colorFn(d.value)))
+        .append("title")
+        .text(d => `${formatDate(d.date)}: ${d.value} death(s) [${d.country}]`);
+
+
+
+
+
+}
+
+</script>
