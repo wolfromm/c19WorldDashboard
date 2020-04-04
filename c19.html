@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <style>
 svg {
-    height: 5000px;
+    /*height: 5000px;*/
     width: 97%;
 }
 </style>
@@ -10,28 +10,43 @@ svg {
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <h1>C19 World Evolution</h3>
 <h2>Daily number of deaths</h4>
-<svg id="svg"></svg>
+
+<!-- <svg id="svg"></svg> -->
+
+<h3>Asia Pacific</h3>
+<div id="asia_pac"></div>
+
+<h3>Europe</h3>
+<div id="europe"></div>
+
+<h3>America</h3>
+<div id="america"></div>
+
+<h3>Mena</h3>
+<div id="mena"></div>
+
+<h3>Central Asia</h3>
+<div id="asia_c"></div>
+
+<h3>Africa</h3>
+<div id="africa"></div>
+
 
 <script>
 // https://blog.risingstack.com/tutorial-d3-js-calendar-heatmap/
 // https://gist.github.com/matehuszarik/b1a8004c52334d8efcd0f9aaad195cf9
 
-// const countries = ['FRA', 'ITA', 'ESP', 'CHN', 'GBR', 'NLD', 'DEU', 'BEL', 'CHE', 'SWE', 'PRT', 'AUT', 'DNK', 'ROU', 'IRL', 'GRC', 'NOR', 'POL', 'RUS']
-// const countries = ['CHN', 'USA', 'BRA', 'CAN', 'ECU', 'DOM', 'PER']
-// const countries = ['CHN', 'JPN', 'KOR', 'MYS', 'IDN', 'SGP', 'THA', 'PHL', 'IND']
-// const countries = ['CHN', 'IRN', 'TUR', 'DZA', 'IRQ', 'EGY']
+const countries = {
+    "asia_c": ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK", "KGZ", "TKM"],
+    "europe": ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU", "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR", "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"],
+    "mena": ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM", "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT", "PSE"],
+    "asia_pac": ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"],
+    "africa": ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ", "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB", "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN", "TGO", "SLE", "ERI", "CAF"],
+    "america": ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
+}
 
-
-// const countries = ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK", "KGZ", "TKM"]
-// const countries = ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU", "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR", "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"]
-// const countries = ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM", "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT", "PSE"]
-const countries = ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"]
-// const countries = ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ", "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB", "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN", "TGO", "SLE", "ERI", "CAF"]
-// const countries = ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
-
-
-d3.csv('c19.csv')
 // d3.csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
+d3.csv('c19.csv')
     .then(function(data) {
         const dateValues = data.map(dv => ({
             country: dv.countriesAndTerritories,
@@ -40,21 +55,28 @@ d3.csv('c19.csv')
             // value: Number(dv.deaths)
             value: Number(dv.cases)
         }));
-        console.log(dateValues)
-        const dateValuesEurope = dateValues.filter(
-            d => countries.includes(d.countryCode))
-        draw(dateValuesEurope)
+        // console.log(dateValues)
+
+        for (const c of ['asia_pac', 'europe', 'america', 'mena', 'asia_c', 'africa']) {
+            const dateValuesCountry = dateValues.filter(
+            d => countries[c].includes(d.countryCode))
+            draw(`#${c}`, dateValuesCountry)
+        }
     })
     .catch(function(error){
         console.log(error)
     })
 
-const svg = d3.select("#svg");
-const { width, height } = document
-    .getElementById("svg")
-    .getBoundingClientRect();
 
-function draw(dateValues) {
+function draw(anchor, dateValues) {
+
+    const cellSize = 15;
+    const startDate = new Date("2020-01-01")
+    const formatDate = d3.utcFormat("%B %d");
+    const colorFn = d3
+        .scaleSequential(d3.interpolateInferno)
+        // .domain([Math.floor(minValue), Math.ceil(maxValue)]);
+        .domain([300, 0]);
 
     const countries = d3
         .nest()
@@ -62,21 +84,16 @@ function draw(dateValues) {
         .entries(dateValues)
         // .reverse();
 
-    console.log(countries)
+    // console.log(countries)
+
+    const svg = d3.select(anchor).append("svg")
+        .attr("height", (countries.length + 1.5) * cellSize)
 
     const values = dateValues.map(c => c.value);
     const maxValue = d3.max(values);
     const minValue = d3.min(values);
 
-    const cellSize = 15;
-
     const group = svg.append("g");
-    const startDate = new Date("2020-01-01")
-    const formatDate = d3.utcFormat("%B %d");
-    const colorFn = d3
-        .scaleSequential(d3.interpolateInferno)
-        // .domain([Math.floor(minValue), Math.ceil(maxValue)]);
-        .domain([300, 0]);
 
     const country = group
         .selectAll("g")
