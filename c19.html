@@ -25,18 +25,20 @@ svg {
 // const countries = ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK", "KGZ", "TKM"]
 // const countries = ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU", "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR", "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"]
 // const countries = ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM", "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT", "PSE"]
-// const countries = ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"]
+const countries = ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"]
 // const countries = ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ", "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB", "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN", "TGO", "SLE", "ERI", "CAF"]
-const countries = ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
+// const countries = ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
 
 
 d3.csv('c19.csv')
+// d3.csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
     .then(function(data) {
         const dateValues = data.map(dv => ({
             country: dv.countriesAndTerritories,
             countryCode: dv.countryterritoryCode,
             date: d3.timeDay(new Date(`${dv.year}-${dv.month}-${dv.day}`)),
-            value: Number(dv.deaths)
+            // value: Number(dv.deaths)
+            value: Number(dv.cases)
         }));
         console.log(dateValues)
         const dateValuesEurope = dateValues.filter(
@@ -91,7 +93,6 @@ function draw(dateValues) {
         .attr("text-anchor", "end")
         .attr("font-size", 14)
         .attr("font-weight", 550)
-        // .attr("transform", "rotate(270)")
         .text(d => d.key);
 
     country
@@ -108,11 +109,6 @@ function draw(dateValues) {
         .attr("fill", d => (d.value == 0 ? '#F8F8F8' : colorFn(d.value)))
         .append("title")
         .text(d => `${formatDate(d.date)}: ${d.value} death(s) [${d.country}]`);
-
-
-
-
-
 }
 
 </script>
