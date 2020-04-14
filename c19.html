@@ -2,16 +2,12 @@
 <meta charset="utf-8">
 <style>
 svg {
-    /*height: 5000px;*/
     width: 97%;
 }
 </style>
+
 <body>
 <script src="https://d3js.org/d3.v5.min.js"></script>
-<h1>C19 World Evolution</h3>
-<h2>Daily number of deaths</h4>
-
-<!-- <svg id="svg"></svg> -->
 
 <h3>Asia Pacific</h3>
 <div id="asia_pac"></div>
@@ -37,13 +33,28 @@ svg {
 // https://gist.github.com/matehuszarik/b1a8004c52334d8efcd0f9aaad195cf9
 
 const countries = {
-    "asia_c": ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK", "KGZ", "TKM"],
-    "europe": ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU", "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR", "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"],
-    "mena": ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM", "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT", "PSE"],
-    "asia_pac": ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS", "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"],
-    "africa": ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ", "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB", "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN", "TGO", "SLE", "ERI", "CAF"],
-    "america": ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL", "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY", "NIC", "CRI"]
+    "asia_c": ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK",
+               "KGZ", "TKM"],
+    "europe": ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU",
+               "NLD", "GRC", "CZE", "BEL", "SWE", "PRT", "HUN", "AUT", "BLR",
+               "CHE", "SRB", "BGR", "FIN", "DNK", "IRL", "SVK"],
+    "mena": ["EGY", "TUR", "IRN", "DZA", "SDN", "IRQ", "MAR", "SAU", "YEM",
+             "SYR", "TUN", "JOR", "AZE", "ARE", "ISR", "LBY", "LBN", "KWT",
+             "PSE"],
+    "asia_pac": ["CHN", "IDN", "JPN", "PHL", "VNM", "THA", "MMR", "KOR", "MYS",
+                 "AUS", "PRK", "TWN", "KHM", "PNG", "LAO", "SGP", "NZL"],
+    "africa": ["NGA", "COD", "ETH", "ZAF", "TZA", "KEN", "UGA", "GHA", "MOZ",
+               "AGO", "CIV", "MDG", "CMR", "NER", "BFA", "MWI", "MLI", "ZMB",
+               "SEN", "SOM", "ZWE", "GIN", "SSD", "RWA", "TCD", "BDI", "BEN",
+               "TGO", "SLE", "ERI", "CAF"],
+    "america": ["USA", "BRA", "MEX", "COL", "ARG", "CAN", "PER", "VEN", "CHL",
+                "GTM", "ECU", "HTI", "CUB", "BOL", "DOM", "HND", "SLV", "PRY",
+                "NIC", "CRI"]
 }
+
+const today = new Date()
+const startDate = d3.timeDay.offset(today, -90)
+console.log(startDate)
 
 // d3.csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 d3.csv('c19.csv')
@@ -52,13 +63,17 @@ d3.csv('c19.csv')
             country: dv.countriesAndTerritories,
             countryCode: dv.countryterritoryCode,
             date: d3.timeDay(new Date(`${dv.year}-${dv.month}-${dv.day}`)),
-            // value: Number(dv.deaths)
-            value: Number(dv.cases)
+            deaths: Number(dv.deaths),
+            cases: Number(dv.cases)
         }));
-        // console.log(dateValues)
+
+        console.log(dateValues)
+
+        const dateValues2 = dateValues.filter(d => d.date > startDate)
+
 
         for (const c of ['asia_pac', 'europe', 'america', 'mena', 'asia_c', 'africa']) {
-            const dateValuesCountry = dateValues.filter(
+            const dateValuesCountry = dateValues2.filter(
             d => countries[c].includes(d.countryCode))
             draw(`#${c}`, dateValuesCountry)
         }
@@ -71,8 +86,13 @@ d3.csv('c19.csv')
 function draw(anchor, dateValues) {
 
     const cellSize = 15;
-    const startDate = new Date("2020-01-01")
-    const formatDate = d3.utcFormat("%B %d");
+    // const startDate = new Date("2020-01-01")
+    const formatDate = d3.utcFormat("%B %d")
+    const values_type = "CASES" //"DEATHS"
+
+    // const values = dateValues.map(c => c.value);
+    // const maxValue = d3.max(values);
+    // const minValue = d3.min(values);
     const colorFn = d3
         .scaleSequential(d3.interpolateInferno)
         // .domain([Math.floor(minValue), Math.ceil(maxValue)]);
@@ -81,17 +101,12 @@ function draw(anchor, dateValues) {
     const countries = d3
         .nest()
         .key(d => d.country)
-        .entries(dateValues)
-        // .reverse();
+        .entries(dateValues);
 
     // console.log(countries)
 
     const svg = d3.select(anchor).append("svg")
         .attr("height", (countries.length + 1.5) * cellSize)
-
-    const values = dateValues.map(c => c.value);
-    const maxValue = d3.max(values);
-    const minValue = d3.min(values);
 
     const group = svg.append("g");
 
@@ -112,6 +127,9 @@ function draw(anchor, dateValues) {
         .attr("font-weight", 550)
         .text(d => d.key);
 
+    const colorCell = (value) => value == 0 ? '#F8F8F8' : colorFn(value)
+    const getValue = (d) => values_type == 'CASES' ? `${d.cases} cases` : `${d.deaths} deaths`
+
     country
         .append("g")
         .selectAll("rect")
@@ -123,9 +141,9 @@ function draw(anchor, dateValues) {
             (d, i) => d3.timeDay.count(startDate, d.date) * cellSize/2 + 20
         )
         .attr("y", 0)
-        .attr("fill", d => (d.value == 0 ? '#F8F8F8' : colorFn(d.value)))
+        .attr("fill", d => colorCell(values_type == 'CASES' ? d.cases : d.deaths))
         .append("title")
-        .text(d => `${formatDate(d.date)}: ${d.value} death(s) [${d.country}]`);
+        .text(d => `${formatDate(d.date)}: ${getValue(d)} in ${d.country}`);
 }
 
 </script>
