@@ -110,6 +110,20 @@ function draw(anchor, dateValues) {
 
     const group = svg.append("g");
 
+    // Write months
+    const months = d3.timeMonth.range(startDate, today)
+    console.log(months)
+    const month = group
+        .selectAll("text")
+        .data(months)
+        .join("text")
+        .attr("x", d => 178 + d3.timeDay.count(startDate, d) * (cellSize/2))
+        .attr("y", cellSize)
+        .attr("text-anchor", "start")
+        .attr("font-size", 14)
+        .attr("font-weight", 880)
+        .text(d => d3.timeFormat("%B")(d))
+
     const country = group
         .selectAll("g")
         .data(countries)
@@ -118,6 +132,7 @@ function draw(anchor, dateValues) {
             (d, i) => `translate(150, ${cellSize * i + cellSize * 1.5})`
         );
 
+    // Write country names
     country
         .append("text")
         .attr("x", 5)
