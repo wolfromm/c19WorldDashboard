@@ -9,22 +9,22 @@ svg {
 <body>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 
-<h3>Asia Pacific</h3>
+<h3>Asia Pacific - cases & deaths</h3>
 <div id="asia_pac"></div>
 
-<h3>Europe</h3>
+<h3>Europe - cases & deaths</h3>
 <div id="europe"></div>
 
-<h3>America</h3>
+<h3>America - cases & deaths</h3>
 <div id="america"></div>
 
-<h3>Mena</h3>
+<h3>Middle East / North Africa - cases & deaths</h3>
 <div id="mena"></div>
 
-<h3>Central Asia</h3>
+<h3>Central Asia - cases & deaths</h3>
 <div id="asia_c"></div>
 
-<h3>Africa</h3>
+<h3>Africa - cases & deaths</h3>
 <div id="africa"></div>
 
 
@@ -32,7 +32,7 @@ svg {
 // https://blog.risingstack.com/tutorial-d3-js-calendar-heatmap/
 // https://gist.github.com/matehuszarik/b1a8004c52334d8efcd0f9aaad195cf9
 
-const countries = {
+const countryGroups = {
     "asia_c": ["IND", "PAK", "BGD", "AFG", "UZB", "NPL", "LKA", "KAZ", "TJK",
                "KGZ", "TKM"],
     "europe": ["RUS", "DEU", "GBR", "FRA", "ITA", "ESP", "UKR", "POL", "ROU",
@@ -54,7 +54,8 @@ const countries = {
 
 const today = new Date()
 const startDate = d3.timeDay.offset(today, -90)
-console.log(startDate)
+
+const ceil = 300    // value corresponding to the 'highest' color
 
 // d3.csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 d3.csv('c19.csv')
@@ -67,28 +68,38 @@ d3.csv('c19.csv')
             cases: Number(dv.cases)
         }));
 
-        console.log(dateValues)
-
         const dateValues2 = dateValues.filter(d => d.date > startDate)
+        const areas = ['asia_pac', 'europe', 'america', 'mena', 'asia_c',
+                       'africa']
 
-
-        for (const c of ['asia_pac', 'europe', 'america', 'mena', 'asia_c', 'africa']) {
-            const dateValuesCountry = dateValues2.filter(
-            d => countries[c].includes(d.countryCode))
-            draw(`#${c}`, dateValuesCountry)
+        const countries = {}
+        for (const c of areas) {
+            const dateValuesC = dateValues2.filter(
+                d => countryGroups[c].includes(d.countryCode))
+            countries[c] = d3.nest()
+                .key(d => d.countryCode)
+                .sortKeys(function(a, b) {return countryGroups[c].indexOf(a) - countryGroups[c].indexOf(b)})
+                .entries(dateValuesC)
         }
+
+        function drawAll(valuesType) {
+            for (const c of areas) {
+                draw(`#${c}`, countries[c], valuesType, ceil)
+            }
+        }
+
+        drawAll("CASES")
+        drawAll("DEATHS")
     })
     .catch(function(error){
         console.log(error)
     })
 
 
-function draw(anchor, dateValues) {
+function draw(anchor, countries, valuesType, ceil) {
 
     const cellSize = 15;
-    // const startDate = new Date("2020-01-01")
     const formatDate = d3.utcFormat("%B %d")
-    const values_type = "CASES" //"DEATHS"
 
     // const values = dateValues.map(c => c.value);
     // const maxValue = d3.max(values);
@@ -96,14 +107,7 @@ function draw(anchor, dateValues) {
     const colorFn = d3
         .scaleSequential(d3.interpolateInferno)
         // .domain([Math.floor(minValue), Math.ceil(maxValue)]);
-        .domain([300, 0]);
-
-    const countries = d3
-        .nest()
-        .key(d => d.country)
-        .entries(dateValues);
-
-    // console.log(countries)
+        .domain([ceil, 0]);
 
     const svg = d3.select(anchor).append("svg")
         .attr("height", (countries.length + 1.5) * cellSize)
@@ -112,7 +116,6 @@ function draw(anchor, dateValues) {
 
     // Write months
     const months = d3.timeMonth.range(startDate, today)
-    console.log(months)
     const month = group
         .selectAll("text")
         .data(months)
@@ -122,7 +125,7 @@ function draw(anchor, dateValues) {
         .attr("text-anchor", "start")
         .attr("font-size", 14)
         .attr("font-weight", 880)
-        .text(d => d3.timeFormat("%B")(d))
+        .text(d => `| ${d3.timeFormat("%B")(d)}`)
 
     const country = group
         .selectAll("g")
@@ -140,10 +143,11 @@ function draw(anchor, dateValues) {
         .attr("text-anchor", "end")
         .attr("font-size", 14)
         .attr("font-weight", 550)
-        .text(d => d.key);
+        // .text(d => d.key);
+        .text(d => d.values[0].country);
 
     const colorCell = (value) => value == 0 ? '#F8F8F8' : colorFn(value)
-    const getValue = (d) => values_type == 'CASES' ? `${d.cases} cases` : `${d.deaths} deaths`
+    const getValue = (d) => valuesType == 'CASES' ? `${d.cases} cases` : `${d.deaths} deaths`
 
     country
         .append("g")
@@ -156,7 +160,7 @@ function draw(anchor, dateValues) {
             (d, i) => d3.timeDay.count(startDate, d.date) * cellSize/2 + 20
         )
         .attr("y", 0)
-        .attr("fill", d => colorCell(values_type == 'CASES' ? d.cases : d.deaths))
+        .attr("fill", d => colorCell(valuesType == 'CASES' ? d.cases : d.deaths))
         .append("title")
         .text(d => `${formatDate(d.date)}: ${getValue(d)} in ${d.country}`);
 }
